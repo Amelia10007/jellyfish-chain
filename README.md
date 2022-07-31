@@ -1,4 +1,4 @@
-# jellyfish chain: a blockchain protocol focused on editablity/removability/unti-bloat
+# jellyfish chain: a blockchain protocol focused on editability/removability/anti-bloat
 
 # License
 [MIT License](./LICENSE.txt)
