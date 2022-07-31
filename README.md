@@ -3,5 +3,7 @@
 # Table of content
 [Concept](./design/concept.md)
 
+[Use case](./design/usecase.md)
+
 # License
 [MIT License](./LICENSE.txt)
