@@ -1,0 +1,11 @@
+[package]
+name = "jellyfish-core"
+version = "0.1.0"
+authors = ["Amelia10007 <nat.horn.mk0426@gmail.com>"]
+edition = "2021"
+description = "Core functionality of jellyfish-chain protocol"
+repository = "https://github.com/Amelia10007/jellyfish-chain"
+license = "MIT"
+readme = "../README.md"
+
+[dependencies]
