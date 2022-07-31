@@ -5,5 +5,7 @@
 
 [Use case](./design/usecase.md)
 
+[Functionality](./design/functionality.md)
+
 # License
 [MIT License](./LICENSE.txt)
