@@ -33,12 +33,11 @@ impl ByteOrder for Timestamp {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::byteorder::ByteOrderBuilder;
 
     #[test]
     fn byte_order() {
         let timestamp = Timestamp(3 + 256 * 2 + 65536 * 1);
-        let byte_order = ByteOrderBuilder::new().append(&timestamp).finalize();
+        let byte_order = timestamp.build_byte_order();
 
         // Byte order must be alligned with little endian
         assert_eq!(byte_order, &[3, 2, 1, 0, 0, 0, 0, 0]);

@@ -20,7 +20,7 @@ pub mod constant {
 
 pub use account::{Account, SecretAccount};
 pub use difficulty::Difficulty;
-pub use digest::Digest;
+pub use digest::Sha256Digest;
 pub use signature::Signature;
 pub use timestamp::Timestamp;
 pub use transaction::Transaction;

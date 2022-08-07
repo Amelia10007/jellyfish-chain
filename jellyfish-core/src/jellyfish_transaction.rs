@@ -128,24 +128,13 @@ impl ByteOrder for JellyfishTransactionContent {
 
 #[cfg(test)]
 mod tests_method {
-    use crate::byteorder::ByteOrderBuilder;
-
     use super::*;
 
     #[test]
     fn byte_order() {
-        assert_eq!(
-            ByteOrderBuilder::new().append(&Method::Insert).finalize(),
-            &[0x01]
-        );
-        assert_eq!(
-            ByteOrderBuilder::new().append(&Method::Modify).finalize(),
-            &[0x02]
-        );
-        assert_eq!(
-            ByteOrderBuilder::new().append(&Method::Remove).finalize(),
-            &[0x04]
-        );
+        assert_eq!(Method::Insert.build_byte_order(), &[0x01]);
+        assert_eq!(Method::Modify.build_byte_order(), &[0x02]);
+        assert_eq!(Method::Remove.build_byte_order(), &[0x04]);
     }
 }
 

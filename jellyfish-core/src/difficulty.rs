@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{byteorder::ByteOrder, Digest};
+use crate::{byteorder::ByteOrder, Sha256Digest};
 
 /// Difficulty to find a new block.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
@@ -22,7 +22,7 @@ impl Difficulty {
     }
 
     /// Checks whether the given digest satisfies the difficulty.
-    pub fn verify_digest(&self, digest: &Digest) -> bool {
+    pub fn verify_digest(&self, digest: &Sha256Digest) -> bool {
         let count = count_first_0_bits(digest.as_ref());
         count >= self.0
     }
@@ -66,7 +66,6 @@ fn count_first_0_bit(x: u8) -> u64 {
 
 #[cfg(test)]
 mod tests {
-    use crate::byteorder::ByteOrderBuilder;
     use crate::constant::MIN_DIFFICULTY;
 
     use super::*;
@@ -85,7 +84,7 @@ mod tests {
     #[test]
     fn byte_order() {
         let d = Difficulty(2 + 256 * 1);
-        let byte_order = ByteOrderBuilder::new().append(&d).finalize();
+        let byte_order = d.build_byte_order();
 
         assert_eq!(byte_order, &[2, 1, 0, 0, 0, 0, 0, 0]);
     }
@@ -93,8 +92,10 @@ mod tests {
     #[test]
     fn verify_bytes() {
         // The beginning 8bits are zero, the following is one.
-        let json = "\"00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\"";
-        let digest = serde_json::from_str::<Digest>(&json).unwrap();
+        let digest = [
+            0, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+            255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+        ];
 
         assert!(Difficulty(8).verify_digest(&digest));
         assert!(!Difficulty(9).verify_digest(&digest));
