@@ -1,6 +1,5 @@
-use crate::signature::SignatureError;
-use crate::ByteOrder;
-use crate::Signature;
+use std::fmt::{self, Display, Formatter};
+
 use ed25519_dalek::{Keypair, PublicKey, Signer, Verifier};
 use hex::ToHex;
 use rand_core::{CryptoRng, RngCore};
@@ -8,7 +7,10 @@ use serde::de::Error as _;
 use serde::Deserializer;
 use serde::Serializer;
 use serde::{Deserialize, Serialize};
-use std::fmt::{self, Display, Formatter};
+
+use crate::signature::SignatureError;
+use crate::ByteOrder;
+use crate::Signature;
 
 /// jellyfish-chain protocol's account.
 /// Ledger, miner, and client have own account.

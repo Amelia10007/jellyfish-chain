@@ -1,7 +1,8 @@
 use std::borrow::Cow;
 
-use crate::{byteorder::ByteOrder, Signature};
 use serde::{Deserialize, Serialize};
+
+use crate::{byteorder::ByteOrder, Signature};
 
 /// Represents an operation of transaction.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]

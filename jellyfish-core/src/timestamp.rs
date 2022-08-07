@@ -1,6 +1,8 @@
-use crate::ByteOrder;
-use serde::{Deserialize, Serialize};
 use std::time::{SystemTime, UNIX_EPOCH};
+
+use serde::{Deserialize, Serialize};
+
+use crate::ByteOrder;
 
 /// Duration from Unix Epoch (1970-01-01 00:00:00 UTC) in nanoseconds.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]

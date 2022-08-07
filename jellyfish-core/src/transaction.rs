@@ -1,10 +1,12 @@
-use crate::signature::SignatureError;
-use crate::{Account, SecretAccount, Signature, Timestamp, Verified, Yet};
-use crate::{ByteOrder, ByteOrderBuilder};
-use serde::{Deserialize, Serialize};
 use std::error::Error;
 use std::fmt::{self, Debug, Display, Formatter};
 use std::marker::PhantomData;
+
+use serde::{Deserialize, Serialize};
+
+use crate::signature::SignatureError;
+use crate::{Account, SecretAccount, Signature, Timestamp, Verified, Yet};
+use crate::{ByteOrder, ByteOrderBuilder};
 
 /// The smallest unit of contract.
 /// ### Generic type parameter

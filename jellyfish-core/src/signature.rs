@@ -1,9 +1,10 @@
+use std::error::Error;
+use std::fmt::{self, Display, Formatter};
+
 use ed25519_dalek::ed25519::signature::Signature as _;
 use hex::ToHex;
 use serde::de::Error as _;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use std::error::Error;
-use std::fmt::{self, Display, Formatter};
 
 use crate::byteorder::ByteOrder;
 
