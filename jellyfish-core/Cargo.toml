@@ -1,0 +1,22 @@
+[package]
+name = "jellyfish-core"
+version = "0.1.0"
+authors = ["Amelia10007 <nat.horn.mk0426@gmail.com>"]
+edition = "2021"
+description = "Core functionality of jellyfish-chain protocol"
+repository = "https://github.com/Amelia10007/jellyfish-chain"
+license = "MIT"
+readme = "../README.md"
+
+[dependencies]
+ed25519-dalek = "1"
+hex = { version = "*", features = ["serde", "alloc"] }
+itertools = "*"
+rand_core = "*"
+rs_merkle = "*"
+serde = { version = "1", features = ["derive"] }
+serde_with = "2"
+sha2 = "*"
+
+[dev-dependencies]
+serde_json = "1"
