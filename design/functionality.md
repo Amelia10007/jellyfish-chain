@@ -129,4 +129,81 @@ jellyfishプロトコルのコア部分を実装するクレート。
        Block ------ BlockTree
 ```
 
+### jsonのフォーマットについて
+データ種ごとに、json形式で表現した際のフォーマットを取り決める。
+これは通信の際に使用される。
+
+Account
+```
+{
+  "name": public_key_hex(string)
+}
+
+example:
+{
+  "name": "8c23ac26a17daffc01bcc8dddb8dfee17666db1c5e7098a26154071f51da97f0"
+}
+```
+
+Timestamp
+```
+unix_epoch_nanosedonds(integer)
+```
+
+Signature
+```
+sign_hex(string)
+```
+
+Digest
+```
+digest_hex(string)
+```
+
+Trasaction
+```
+{
+  "account": account,
+  "timestamp": timestamp,
+  "content": {
+    "method": method(string),
+    "message": message(string),        // Optional (used for Insert and Modify method)
+    "target": {                        // Optional (used for Modify and Remove method)
+      "height": block_height(integer),
+      "sign": sign
+    }
+  },
+  "sign": sign
+}
+
+example
+{
+  "account": {
+    "name": "039058c6f2c0cb492c533b0a4d14ef77cc0f78abccced5287d84a1a2011cfb81"
+  },
+  "timestamp": 1234567890,
+  "content": {
+    "method": "Modify",
+    "message": "Hello, jellyfish-chain world",
+    "target": {
+      "height": 42,
+      "sign": "039058c6f2c0cb492c533b0a4d14ef77cc0f78abccced5287d84a1a2011cfb81"
+    }
+  },
+  "sign": "039058c6f2c0cb492c533b0a4d14ef77cc0f78abccced5287d84a1a2011cfb81"
+}
+```
+
+Block header
+```
+{
+  "height": block_height(integer),
+  "timestamp": unix_epoch_nanosedonds(integer),
+  "previous": digest_of_previous_block(string),
+  "difficulty": difficulty(integer),
+  "markle_root": markle_root_digest(string),
+  "nonce": nonce(integer),
+  "digest": digest_of_this_block(string)
+}
+```
 ## jellyfish-chain-net
