@@ -165,21 +165,8 @@ mod tests {
         SecretAccount::create(&mut rand_core::OsRng {})
     }
 
-    // #[test]
-    // fn test_xxx() {
-    //     let account = create_account();
-    //     let timestamp = Timestamp::now();
-
-    //     let content = crate::jellyfish_transaction::JellyfishTransactionContent::insert("hello");
-
-    //     let tx = Transaction::create(&account, timestamp, content);
-
-    //     let str = serde_json::to_string(&tx).unwrap();
-    //     assert_eq!(str, "");
-    // }
-
     #[test]
-    fn test_verify() {
+    fn verify() {
         // Create transaction
         let account = create_account();
         let timestamp = Timestamp::now();
@@ -198,7 +185,7 @@ mod tests {
     }
 
     #[test]
-    fn test_verify_corrupt_account() {
+    fn verify_corrupt_account() {
         // Create transaction
         let account = create_account();
         let timestamp = Timestamp::now();
@@ -220,7 +207,7 @@ mod tests {
     }
 
     #[test]
-    fn test_verify_corrupt_timestamp() {
+    fn verify_corrupt_timestamp() {
         // Create transaction
         let account = create_account();
         let timestamp = Timestamp::now();
@@ -242,7 +229,7 @@ mod tests {
     }
 
     #[test]
-    fn test_verify_corrupt_content() {
+    fn verify_corrupt_content() {
         // Create transaction
         let account = create_account();
         let timestamp = Timestamp::now();
@@ -264,7 +251,7 @@ mod tests {
     }
 
     #[test]
-    fn test_verify_corrupt_sign() {
+    fn verify_corrupt_sign() {
         // Create transaction
         let account = create_account();
         let timestamp = Timestamp::now();
