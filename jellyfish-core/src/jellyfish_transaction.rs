@@ -31,14 +31,24 @@ impl ByteOrder for Method {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TransactionIdentifier {
     /// Which block contains the target transaction.
-    pub block_height: u64,
+    pub height: u64,
     /// Target transaction's sign.
     pub sign: Signature,
 }
 
+impl TransactionIdentifier {
+    /// Creates new transaction identifier.
+    pub fn new(block_height: u64, sign: Signature) -> Self {
+        Self {
+            height: block_height,
+            sign,
+        }
+    }
+}
+
 impl ByteOrder for TransactionIdentifier {
     fn append_bytes(&self, buf: &mut Vec<u8>) {
-        buf.extend(self.block_height.to_le_bytes());
+        buf.extend(self.height.to_le_bytes());
         self.sign.append_bytes(buf);
     }
 }
@@ -113,5 +123,59 @@ impl ByteOrder for JellyfishTransactionContent {
         if let Some(target) = &self.target {
             target.append_bytes(buf);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests_method {
+    use crate::byteorder::ByteOrderBuilder;
+
+    use super::*;
+
+    #[test]
+    fn byte_order() {
+        assert_eq!(
+            ByteOrderBuilder::new().append(&Method::Insert).finalize(),
+            &[0x01]
+        );
+        assert_eq!(
+            ByteOrderBuilder::new().append(&Method::Modify).finalize(),
+            &[0x02]
+        );
+        assert_eq!(
+            ByteOrderBuilder::new().append(&Method::Remove).finalize(),
+            &[0x04]
+        );
+    }
+}
+
+#[cfg(test)]
+mod tests_transaction_identifier {
+    use super::*;
+
+    const SIGN_JSON: &'static str = "\"f980f643a1af9602564fb1da2fd296bc48e546d0958124c2a466756eb35bcf9e145a0b8eea383672d54ea9f10b67011cbb1df7896dd796de1ff326fbc39edd08\"";
+
+    #[test]
+    fn serialize() {
+        let block_height = 42;
+        let sign = serde_json::from_str(SIGN_JSON).unwrap();
+        let id = TransactionIdentifier::new(block_height, sign);
+
+        let serialized = serde_json::to_string(&id).unwrap();
+        let json = format!(r#"{{"height":{},"sign":{}}}"#, block_height, SIGN_JSON);
+
+        assert_eq!(serialized, json);
+    }
+
+    #[test]
+    fn deserialize() {
+        let block_height = 42;
+        let sign = serde_json::from_str(SIGN_JSON).unwrap();
+        let json = format!(r#"{{"height":{},"sign":{}}}"#, block_height, SIGN_JSON);
+
+        let deserialized = serde_json::from_str::<TransactionIdentifier>(&json).unwrap();
+
+        assert_eq!(deserialized.height, block_height);
+        assert_eq!(deserialized.sign, sign);
     }
 }
