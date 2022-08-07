@@ -10,14 +10,6 @@ pub mod transaction;
 mod byteorder;
 mod verification;
 
-/// Constant value collection of jellyfish protocol.
-pub mod constant {
-    use crate::Difficulty;
-
-    /// Minimum difficulty of finding a new block.
-    pub const MIN_DIFFICULTY: Difficulty = Difficulty::new(10);
-}
-
 pub use account::{Account, SecretAccount};
 pub use difficulty::Difficulty;
 pub use digest::Sha256Digest;

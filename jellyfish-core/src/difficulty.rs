@@ -16,9 +16,10 @@ impl Difficulty {
         Self(self.0 + 1)
     }
 
-    /// Returns easer condition by 1 step, but the returned value never be easer than `jellyfish_core::constant::MIN_DIFFICULTY`.
+    /// Returns easer condition by 1 step, but the returned value never be negative.
     pub fn ease(&self) -> Self {
-        std::cmp::max(Self(self.0 - 1), crate::constant::MIN_DIFFICULTY)
+        let inner = self.0.checked_sub(1).unwrap_or(0);
+        Self(inner)
     }
 
     /// Checks whether the given digest satisfies the difficulty.
@@ -66,8 +67,6 @@ fn count_first_0_bit(x: u8) -> u64 {
 
 #[cfg(test)]
 mod tests {
-    use crate::constant::MIN_DIFFICULTY;
-
     use super::*;
 
     #[test]
@@ -78,7 +77,7 @@ mod tests {
     #[test]
     fn ease() {
         assert_eq!(Difficulty(99), Difficulty(100).ease());
-        assert_eq!(MIN_DIFFICULTY, MIN_DIFFICULTY.ease());
+        assert_eq!(Difficulty(0), Difficulty(0).ease());
     }
 
     #[test]
