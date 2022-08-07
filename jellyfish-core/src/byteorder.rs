@@ -1,9 +1,13 @@
 /// Represents its implementator as a byte sequence based on jellyfish protocol.
 ///
 /// This is used to build source of signature and digest.
-pub trait ByteOrder {
+pub trait ByteOrder: Sized {
     /// Based on jellyfish protocol, append byte-sequence representation of the structure.
     fn append_bytes(&self, buf: &mut Vec<u8>);
+
+    fn build_byte_order(&self) -> Vec<u8> {
+        ByteOrderBuilder::new().append(self).finalize()
+    }
 }
 
 /// Builds a byte sequence for signature and digest.
