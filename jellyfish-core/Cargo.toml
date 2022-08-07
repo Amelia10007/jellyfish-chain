@@ -11,7 +11,9 @@ readme = "../README.md"
 [dependencies]
 ed25519-dalek = "1"
 hex = { version = "*", features = ["serde", "alloc"] }
+itertools = "*"
 rand_core = "*"
+rs_merkle = "*"
 serde = { version = "1", features = ["derive"] }
 serde_with = "2"
 sha2 = "*"
