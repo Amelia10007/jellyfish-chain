@@ -71,7 +71,7 @@ jellyfishプロトコルのコア部分を実装するクレート。
     - timestamp このブロックが作成された時刻
     - previous_digest 1つ前のブロックのハッシュ
     - difficulty ブロック採掘の難易度
-    - markle_root このブロックのトランザクションのマークル木の根のハッシュ
+    - merkle_root このブロックのトランザクションのマークル木の根のハッシュ
     - nonce ナンス
     - digest このブロックのハッシュ
   - transactions トランザクション
@@ -105,7 +105,7 @@ jellyfishプロトコルのコア部分を実装するクレート。
 1. timestampをナノ秒刻みのunix epochの64bit整数として、そのバイト表現を列に追加する
 1. previous digestのバイト列を列に追加する
 1. difficultyを64bit整数として解釈し、そのバイト表現を列に追加する
-1. markle rootのハッシュを列に追加する
+1. merkle rootのハッシュを列に追加する
 1. nonceを64bit整数として解釈し、そのバイト表現を列に追加する
 1. バイト列に対してハッシュを計算する
 
@@ -116,7 +116,7 @@ jellyfishプロトコルのコア部分を実装するクレート。
 1. トランザクションを並び替える。
 1. トランザクションのハッシュを計算する
 1. 計算したハッシュを葉として、2分木となるように木を構築する。各ノードには、子のハッシュから計算したハッシュを格納する
-1. 根のハッシュがmarkle rootとなる
+1. 根のハッシュがmerkle rootとなる
 
 ### データ関係
 コア部分のデータ間関係は以下
@@ -201,7 +201,7 @@ Block header
   "timestamp": unix_epoch_nanosedonds(integer),
   "previous": digest_of_previous_block(string),
   "difficulty": difficulty(integer),
-  "markle_root": markle_root_digest(string),
+  "merkle_root": merkle_root_digest(string),
   "nonce": nonce(integer),
   "digest": digest_of_this_block(string)
 }
