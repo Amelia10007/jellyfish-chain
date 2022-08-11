@@ -273,4 +273,42 @@ mod tests {
 
         assert!(matches!(res, Err(TransactionError::Signature(_))));
     }
+
+    #[test]
+    fn serde() {
+        let account = create_account();
+        let timestamp = Timestamp::now();
+        let content = ContentStab(vec![0, 1, 2]);
+        let tx = Transaction::create(&account, timestamp, content);
+
+        let json = serde_json::to_string(&tx).unwrap();
+
+        let deserialized = serde_json::from_str::<Transaction<ContentStab, Yet>>(&json)
+            .unwrap()
+            .verify()
+            .unwrap();
+
+        assert_eq!(tx, deserialized);
+    }
+
+    #[test]
+    fn deserialize() {
+        const JSON: &'static str = r#"
+        {
+            "account":
+            {
+                "name": "f707de1d9fde128817a23123d3d94916b2f9b00240b3fd4754846a7d5bed8844"
+            },
+            "timestamp": 1660188450294955200,
+            "content": [0,1,2],
+            "sign": "e4663d3e30ba20c2dce6e85d1100bd601ff6605901f9fe505daef989e6dbf03a0ed3eb0ce876697330d9816ef1474c410d3ad7eb4df8cdba5923d097f1b97a01"
+        }"#;
+
+        let tx = serde_json::from_str::<Transaction<ContentStab, Yet>>(JSON)
+            .unwrap()
+            .verify()
+            .unwrap();
+
+        assert_eq!(tx.content, ContentStab(vec![0, 1, 2]));
+    }
 }

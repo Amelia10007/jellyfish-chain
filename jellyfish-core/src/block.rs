@@ -407,6 +407,57 @@ mod tests_header {
             assert_ne!(digest_org, h.build_byte_order());
         }
     }
+
+    #[test]
+    fn serde() {
+        let height = 42;
+        let timestamp = Timestamp::now();
+        let previous_digest = [0; 32];
+        let difficulty = Difficulty::new(1);
+        let transactions = {
+            let secret_account = SecretAccount::create(&mut rand_core::OsRng {});
+            let content = Stab("hello");
+            let tx = VerifiedTransaction::create(&secret_account, timestamp, content);
+            vec![tx]
+        };
+        let nonce = 0;
+
+        let header = Header::create(
+            height,
+            timestamp,
+            previous_digest,
+            difficulty,
+            &transactions,
+            nonce,
+        )
+        .unwrap();
+
+        let json = serde_json::to_string(&header).unwrap();
+        let deserialized = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(header, deserialized);
+    }
+
+    #[test]
+    fn deserialize() {
+        const JSON: &'static str = r#"
+        {
+            "height": 42,
+            "timestamp": 1660188857857779400,
+            "previous_digest": "0000000000000000000000000000000000000000000000000000000000000000",
+            "difficulty": 1,
+            "merkle_root": "f09b3e73236162c46ea75897fa0053198dbe2569f2d0139cd2e4cc113e17acad",
+            "nonce": 0,
+            "digest": "b342a0f9349d535391d90b3fd7f64f5ce01ff257cffce337f85a9da67d98d292"
+        }"#;
+
+        let header = serde_json::from_str::<Header>(JSON).unwrap();
+
+        assert_eq!(header.height(), 42);
+        assert_eq!(header.previous_digest(), &[0; 32]);
+        assert_eq!(header.difficulty(), Difficulty::new(1));
+        assert_eq!(header.nonce(), 0);
+    }
 }
 
 #[cfg(test)]
