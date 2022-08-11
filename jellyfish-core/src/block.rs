@@ -7,9 +7,9 @@ use rs_merkle::MerkleTree;
 use serde::{Deserialize, Serialize};
 
 use crate::digest::calculate_digest;
-use crate::transaction::TransactionError;
+use crate::transaction::{TransactionError, VerifiedTransaction};
+use crate::Timestamp;
 use crate::{ByteOrder, Difficulty, Sha256Digest, Verified, Yet};
-use crate::{Timestamp, Transaction};
 
 /// Block header. This contains all data of a block, except for transactions.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -43,18 +43,15 @@ impl Header {
     ///
     /// # Caution:
     /// Nonce after [`create()`] is not valid value for meeting with Proof-of-Work condition.
-    /// Proof-of-Work process must be executed manually by using [`modify_nonce()`] and [`digest()`].
-    pub fn create<T, VT>(
+    /// Proof-of-Work must be executed manually by using [`modify_nonce()`] and [`digest()`].
+    pub fn create<T>(
         height: u64,
         timestamp: Timestamp,
         previous_digest: Sha256Digest,
         difficulty: Difficulty,
-        transactions: &[Transaction<T, VT>],
+        transactions: &[VerifiedTransaction<T>],
         nonce: u64,
-    ) -> Option<Self>
-    where
-        T: ByteOrder,
-    {
+    ) -> Option<Self> {
         let merkle_root = build_merkle_tree(transactions).root()?;
 
         let mut header = Self {
@@ -127,95 +124,46 @@ impl ByteOrder for Header {
 /// Block.
 /// # Generic type parameters
 /// - `T` Transaction content.
-/// - `VT` Verification process marker of transactions.
-/// - `VB` Verification process marker of block integrity.
+/// - `V` Verification process marker of block integrity.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Block<T, VT, VB> {
+pub struct Block<T, V> {
     header: Header,
-    transactions: Vec<Transaction<T, VT>>,
-    _phantom: PhantomData<fn() -> VB>,
+    transactions: Vec<VerifiedTransaction<T>>,
+    _phantom: PhantomData<fn() -> V>,
 }
 
-impl<T, VT, VB> Block<T, VT, VB> {
+impl<T, V> Block<T, V> {
     pub fn header(&self) -> &Header {
         &self.header
     }
 
-    pub fn transactions(&self) -> &[Transaction<T, VT>] {
+    pub fn transactions(&self) -> &[VerifiedTransaction<T>] {
         &self.transactions
     }
 }
 
-impl<T, VT> Block<T, VT, Yet> {
+impl<T> Block<T, Yet> {
     /// Create new block without executing Proof-of-Work.
-    /// # Returns
-    /// `Err(err)` if empty transaction is given, otherwise, `Ok(block)`.
     ///
     /// # Caution:
-    /// Nonce after [`create()`] is not valid value for meeting with Proof-of-Work condition.
-    /// Proof-of-Work process must be executed manually by using [`header_mut()`] and modifying nonce.
-    pub fn create(
-        height: u64,
-        timestamp: Timestamp,
-        previous_digest: Sha256Digest,
-        difficulty: Difficulty,
-        transactions: Vec<Transaction<T, VT>>,
-    ) -> Result<Block<T, VT, Yet>, BlockError>
-    where
-        T: ByteOrder,
-    {
-        let nonce = 0;
-        let header = Header::create(
-            height,
-            timestamp,
-            previous_digest,
-            difficulty,
-            &transactions,
-            nonce,
-        )
-        .ok_or(BlockError::Empty)?;
-        let block = Block {
+    /// After creating a block, proof-of-Work must be executed manually by using [`header_mut()`] and modifying nonce.
+    pub fn create(header: Header, transactions: Vec<VerifiedTransaction<T>>) -> Block<T, Yet> {
+        Block {
             header,
             transactions,
             _phantom: PhantomData,
-        };
-        Ok(block)
+        }
     }
 
     /// Returns mutable reference to the header.
     ///
-    /// This method is designed to execute Proof-of-Work process via [`Header::modify_nonce()`].
+    /// This method is designed to execute Proof-of-Work via [`Header::modify_nonce()`].
     pub fn header_mut(&mut self) -> &mut Header {
         &mut self.header
     }
 }
 
-impl<T, VB> Block<T, Yet, VB>
-where
-    T: ByteOrder,
-{
-    /// Verify all sign of transactions in the block.
-    pub fn verify_transactions(self) -> Result<Block<T, Verified, VB>, BlockError> {
-        let result = self
-            .transactions
-            .into_iter()
-            .map(Transaction::verify)
-            .collect::<Result<Vec<_>, TransactionError>>();
-        match result {
-            Ok(transactions) => {
-                let block = Block {
-                    header: self.header,
-                    transactions,
-                    _phantom: PhantomData,
-                };
-                Ok(block)
-            }
-            Err(e) => Err(BlockError::Transaction(e)),
-        }
-    }
-}
-
-impl<T, VT> Block<T, VT, Yet> {
+impl<T> Block<T, Yet> {
     /// Verify integrity of the block.
     /// # Parameters
     /// - `previous_digest_judge` Given a header of verification-target block, returns `true` if the previous digest is meet with blockchain.
@@ -225,18 +173,17 @@ impl<T, VT> Block<T, VT, Yet> {
     /// # Caution
     /// No verification is checked for transactions' contents (['Transaction::content()']).
     /// Contents' integrity must be checked manually based on each protocol.
-    pub fn verify_block<F>(
-        self,
-        previous_digest_judge: F,
-    ) -> Result<Block<T, VT, Verified>, BlockError>
+    pub fn verify_block<F>(self, previous_digest_judge: F) -> Result<Block<T, Verified>, BlockError>
     where
         F: FnOnce(&Header) -> bool,
     {
+        // Build merkle root of transactions
         let merkle_root = match build_merkle_tree(&self.transactions).root() {
             Some(root) => root,
             None => return Err(BlockError::Empty),
         };
 
+        // Merkle root matching
         if &merkle_root != self.header.merkle_root() {
             return Err(BlockError::Merkle);
         }
@@ -310,7 +257,7 @@ impl std::error::Error for BlockError {
 }
 
 /// Build merkle tree from given transactions.
-fn build_merkle_tree<T, VT>(transactions: &[Transaction<T, VT>]) -> MerkleTree<Sha256> {
+fn build_merkle_tree<T>(transactions: &[VerifiedTransaction<T>]) -> MerkleTree<Sha256> {
     let digests = transactions
         .iter()
         .map(|tx| tx.sign().as_ref())
@@ -347,7 +294,7 @@ mod tests_header {
         let timestamp = Timestamp::now();
         let previous_digest = [0; 32];
         let difficulty = Difficulty::new(1);
-        let transactions: Vec<Transaction<Stab, Verified>> = vec![];
+        let transactions: Vec<VerifiedTransaction<Stab>> = vec![];
         let nonce = 0;
 
         let option = Header::create(
@@ -371,7 +318,7 @@ mod tests_header {
         let transactions = {
             let secret_account = SecretAccount::create(&mut rand_core::OsRng {});
             let content = Stab("hello");
-            let tx = Transaction::create(&secret_account, timestamp, content);
+            let tx = VerifiedTransaction::create(&secret_account, timestamp, content);
             vec![tx]
         };
         let nonce = 0;
@@ -395,6 +342,71 @@ mod tests_header {
 
         assert_ne!(&digest1, digest2);
     }
+
+    #[test]
+    fn byte_order() {
+        // Create header
+        let height = 42;
+        let timestamp = Timestamp::now();
+        let previous_digest = [0; 32];
+        let difficulty = Difficulty::new(1);
+        let transactions = {
+            let secret_account = SecretAccount::create(&mut rand_core::OsRng {});
+            let content = Stab("hello");
+            let tx = VerifiedTransaction::create(&secret_account, timestamp, content);
+            vec![tx]
+        };
+        let nonce = 0;
+
+        let header = Header::create(
+            height,
+            timestamp,
+            previous_digest,
+            difficulty,
+            &transactions,
+            nonce,
+        )
+        .unwrap();
+
+        let digest_org = header.build_byte_order();
+        // Digest is not affected by header's digest
+        {
+            let mut h = header.clone();
+            h.digest = calculate_digest("cheat header digest");
+            assert_eq!(digest_org, h.build_byte_order());
+        }
+        // Digest is affected by header's content, except for its digest
+        {
+            let mut h = header.clone();
+            h.height = header.height + 1;
+            assert_ne!(digest_org, h.build_byte_order());
+        }
+        {
+            let mut h = header.clone();
+            h.timestamp = Timestamp::now();
+            assert_ne!(digest_org, h.build_byte_order());
+        }
+        {
+            let mut h = header.clone();
+            h.previous_digest = [1; 32];
+            assert_ne!(digest_org, h.build_byte_order());
+        }
+        {
+            let mut h = header.clone();
+            h.difficulty = Difficulty::new(42);
+            assert_ne!(digest_org, h.build_byte_order());
+        }
+        {
+            let mut h = header.clone();
+            h.merkle_root = [2; 32];
+            assert_ne!(digest_org, h.build_byte_order());
+        }
+        {
+            let mut h = header.clone();
+            h.nonce = header.nonce + 1;
+            assert_ne!(digest_org, h.build_byte_order());
+        }
+    }
 }
 
 #[cfg(test)]
@@ -404,42 +416,38 @@ mod tests_block {
     use super::tests_stab::*;
     use super::*;
 
-    fn stab_transactions() -> Vec<Transaction<Stab, Verified>> {
-        let secret_account = SecretAccount::create(&mut rand_core::OsRng {});
-        let timestamp = Timestamp::now();
-        let content = Stab("hello");
-        let tx = Transaction::create(&secret_account, timestamp, content);
-        vec![tx]
-    }
+    fn stab_block() -> Block<Stab, Yet> {
+        let transactions = {
+            let secret_account = SecretAccount::create(&mut rand_core::OsRng {});
+            let timestamp = Timestamp::now();
+            let content = Stab("hello");
+            let tx = VerifiedTransaction::create(&secret_account, timestamp, content);
+            vec![tx]
+        };
+        let header = {
+            let height = 42;
+            let timestamp = Timestamp::now();
+            let previous_digest = [0; 32];
+            let difficulty = Difficulty::new(1);
+            let nonce = 0;
 
-    #[test]
-    fn create_empty_transaction() {
-        let height = 42;
-        let timestamp = Timestamp::now();
-        let previous_digest = [0; 32];
-        let difficulty = Difficulty::new(1);
-        let transactions: Vec<Transaction<Stab, Verified>> = vec![];
+            Header::create(
+                height,
+                timestamp,
+                previous_digest,
+                difficulty,
+                &transactions,
+                nonce,
+            )
+            .unwrap()
+        };
 
-        let result = Block::create(height, timestamp, previous_digest, difficulty, transactions);
-
-        assert!(matches!(result, Err(BlockError::Empty)));
+        Block::create(header, transactions)
     }
 
     #[test]
     fn verify_block_fail_empty_transaction() {
-        let height = 42;
-        let timestamp = Timestamp::now();
-        let previous_digest = [0; 32];
-        let difficulty = Difficulty::new(1);
-        let transactions = {
-            let secret_account = SecretAccount::create(&mut rand_core::OsRng {});
-            let content = Stab("hello");
-            let tx = Transaction::create(&secret_account, timestamp, content);
-            vec![tx]
-        };
-
-        let mut block =
-            Block::create(height, timestamp, previous_digest, difficulty, transactions).unwrap();
+        let mut block = stab_block();
 
         // Cheat transactions
         block.transactions.clear();
@@ -450,20 +458,7 @@ mod tests_block {
 
     #[test]
     fn verify_block() {
-        let height = 42;
-        let timestamp = Timestamp::now();
-        let previous_digest = [0; 32];
-        let difficulty = Difficulty::new(1);
-        let transactions = stab_transactions();
-
-        let mut block = Block::create(
-            height,
-            timestamp,
-            previous_digest.clone(),
-            difficulty,
-            transactions.clone(),
-        )
-        .unwrap();
+        let mut block = stab_block();
 
         // Proof-of-Work process
         // Find valid digest, with changing nonce.
@@ -479,28 +474,16 @@ mod tests_block {
 
         // Verification should succeed because valid digest has found.
         let block = block.verify_block(|_header| true).unwrap();
-        let header = block.header();
-
-        assert_eq!(header.height(), height);
-        assert_eq!(header.timestamp(), timestamp);
-        assert_eq!(header.previous_digest(), &previous_digest);
-        assert_eq!(header.difficulty(), difficulty);
-        assert_eq!(block.transactions(), transactions);
 
         // Proof-of-Work check
-        assert!(header.difficulty().verify_digest(header.digest()));
+        let h = block.header();
+        assert!(h.difficulty().verify_digest(h.digest()));
     }
 
     #[test]
     fn verify_block_fail_merkle_root() {
-        let height = 42;
-        let timestamp = Timestamp::now();
-        let previous_digest = [0; 32];
-        let difficulty = Difficulty::new(1);
-        let transactions = stab_transactions();
+        let mut block = stab_block();
 
-        let mut block =
-            Block::create(height, timestamp, previous_digest, difficulty, transactions).unwrap();
         // Proof-of-Work process
         // Find valid digest, with changing nonce.
         loop {
@@ -514,7 +497,8 @@ mod tests_block {
         }
 
         // Cheat transactions
-        block.transactions.clear();
+        let tx = block.transactions()[0].clone();
+        block.transactions.push(tx);
 
         let result = block.verify_block(|_header| true);
         assert!(result.is_err());
@@ -522,20 +506,7 @@ mod tests_block {
 
     #[test]
     fn verify_block_fail_difficulty() {
-        let height = 42;
-        let timestamp = Timestamp::now();
-        let previous_digest = [0; 32];
-        let difficulty = Difficulty::new(1);
-        let transactions = stab_transactions();
-
-        let mut block = Block::create(
-            height,
-            timestamp,
-            previous_digest.clone(),
-            difficulty,
-            transactions.clone(),
-        )
-        .unwrap();
+        let mut block = stab_block();
 
         // Proof-of-Work process
         // Find valid digest, with changing nonce.
@@ -558,20 +529,7 @@ mod tests_block {
 
     #[test]
     fn verify_block_fail_digest() {
-        let height = 42;
-        let timestamp = Timestamp::now();
-        let previous_digest = [0; 32];
-        let difficulty = Difficulty::new(1);
-        let transactions = stab_transactions();
-
-        let mut block = Block::create(
-            height,
-            timestamp,
-            previous_digest.clone(),
-            difficulty,
-            transactions.clone(),
-        )
-        .unwrap();
+        let mut block = stab_block();
 
         // Proof-of-Work process
         // Find valid digest, with changing nonce.
@@ -594,20 +552,7 @@ mod tests_block {
 
     #[test]
     fn verify_block_fail_previous_digest() {
-        let height = 42;
-        let timestamp = Timestamp::now();
-        let previous_digest = [0; 32];
-        let difficulty = Difficulty::new(1);
-        let transactions = stab_transactions();
-
-        let mut block = Block::create(
-            height,
-            timestamp,
-            previous_digest.clone(),
-            difficulty,
-            transactions.clone(),
-        )
-        .unwrap();
+        let mut block = stab_block();
 
         // Proof-of-Work process
         // Find valid digest, with changing nonce.
@@ -639,7 +584,7 @@ mod tests_function {
         let secret_account = SecretAccount::create(&mut rand_core::OsRng {});
         let timestamp = Timestamp::now();
         let content = Stab("hello");
-        let tx = Transaction::create(&secret_account, timestamp, content);
+        let tx = VerifiedTransaction::create(&secret_account, timestamp, content);
 
         let expected_merkle_root = calculate_digest(tx.sign());
 
@@ -651,7 +596,7 @@ mod tests_function {
 
     #[test]
     fn build_merkle_tree_empty() {
-        let tree = super::build_merkle_tree::<Stab, Verified>(&[]);
+        let tree = super::build_merkle_tree::<Stab>(&[]);
         assert!(tree.root().is_none());
     }
 }

@@ -8,6 +8,8 @@ use crate::signature::SignatureError;
 use crate::{Account, SecretAccount, Signature, Timestamp, Verified, Yet};
 use crate::{ByteOrder, ByteOrderBuilder};
 
+pub type VerifiedTransaction<T> = Transaction<T, Verified>;
+
 /// The smallest unit of contract.
 /// ### Generic type parameter
 /// - `T` transaction content.
