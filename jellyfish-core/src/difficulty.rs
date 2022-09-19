@@ -18,7 +18,7 @@ impl Difficulty {
 
     /// Returns easer condition by 1 step, but the returned value never be negative.
     pub fn ease(&self) -> Self {
-        let inner = self.0.checked_sub(1).unwrap_or(0);
+        let inner = self.0.saturating_sub(1);
         Self(inner)
     }
 

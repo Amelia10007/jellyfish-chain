@@ -100,7 +100,7 @@ impl SecretAccount {
     /// Returns public part of the account.
     pub fn to_public(&self) -> Account {
         Account {
-            name: self.keypair.public.clone(),
+            name: self.keypair.public,
         }
     }
 }
