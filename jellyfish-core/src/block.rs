@@ -316,7 +316,7 @@ mod tests_header {
         let previous_digest = [0; 32];
         let difficulty = Difficulty::new(1);
         let transactions = {
-            let secret_account = SecretAccount::create(&mut rand_core::OsRng {});
+            let secret_account = SecretAccount::create(&mut rand::rngs::OsRng {});
             let content = Stab("hello");
             let tx = VerifiedTransaction::create(&secret_account, timestamp, content);
             vec![tx]
@@ -351,7 +351,7 @@ mod tests_header {
         let previous_digest = [0; 32];
         let difficulty = Difficulty::new(1);
         let transactions = {
-            let secret_account = SecretAccount::create(&mut rand_core::OsRng {});
+            let secret_account = SecretAccount::create(&mut rand::rngs::OsRng {});
             let content = Stab("hello");
             let tx = VerifiedTransaction::create(&secret_account, timestamp, content);
             vec![tx]
@@ -415,7 +415,7 @@ mod tests_header {
         let previous_digest = [0; 32];
         let difficulty = Difficulty::new(1);
         let transactions = {
-            let secret_account = SecretAccount::create(&mut rand_core::OsRng {});
+            let secret_account = SecretAccount::create(&mut rand::rngs::OsRng {});
             let content = Stab("hello");
             let tx = VerifiedTransaction::create(&secret_account, timestamp, content);
             vec![tx]
@@ -469,7 +469,7 @@ mod tests_block {
 
     fn stab_block() -> Block<Stab, Yet> {
         let transactions = {
-            let secret_account = SecretAccount::create(&mut rand_core::OsRng {});
+            let secret_account = SecretAccount::create(&mut rand::rngs::OsRng {});
             let timestamp = Timestamp::now();
             let content = Stab("hello");
             let tx = VerifiedTransaction::create(&secret_account, timestamp, content);
@@ -632,7 +632,7 @@ mod tests_function {
 
     #[test]
     fn build_merkle_tree() {
-        let secret_account = SecretAccount::create(&mut rand_core::OsRng {});
+        let secret_account = SecretAccount::create(&mut rand::rngs::OsRng {});
         let timestamp = Timestamp::now();
         let content = Stab("hello");
         let tx = VerifiedTransaction::create(&secret_account, timestamp, content);

@@ -164,7 +164,7 @@ mod tests {
     }
 
     fn create_account() -> SecretAccount {
-        SecretAccount::create(&mut rand_core::OsRng {})
+        SecretAccount::create(&mut rand::rngs::OsRng {})
     }
 
     #[test]

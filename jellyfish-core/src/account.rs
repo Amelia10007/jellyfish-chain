@@ -2,7 +2,7 @@ use std::fmt::{self, Display, Formatter};
 
 use ed25519_dalek::{Keypair, PublicKey, Signer, Verifier};
 use hex::ToHex;
-use rand_core::{CryptoRng, RngCore};
+use rand::{CryptoRng, RngCore};
 use serde::de::Error as _;
 use serde::Deserializer;
 use serde::Serializer;
@@ -179,7 +179,7 @@ mod tests_secret_account {
     use super::*;
 
     fn create_secret_account() -> SecretAccount {
-        SecretAccount::create(&mut rand_core::OsRng {})
+        SecretAccount::create(&mut rand::rngs::OsRng {})
     }
 
     #[test]
